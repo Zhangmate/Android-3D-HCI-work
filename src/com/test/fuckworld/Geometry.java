@@ -23,7 +23,7 @@ public class Geometry extends Activity  {
 	  @Override
 	    public void onCreate(Bundle savedInstanceState) {
 	    	super.onCreate(savedInstanceState);
-	       
+	    	initBitmap.init(this.getResources());
 	    	MySurfaceView renderer = new MySurfaceView(this);
 	        
 	   

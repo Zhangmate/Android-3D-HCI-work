@@ -23,14 +23,14 @@ float axis=0.0f;
 //float trans_scale,scale_rot;
 float delta_angle,delta_length,transl_length,old_angle;
 private static float old_x0,old_x1,old_y0,old_y1,new_x0,new_x1,new_y0,new_y1;
-boolean isrotate=false,istransl=false,isscale=false;
+boolean isrotate=false,istransl=false,isscale=false,isclear=false;
 int count=0;
 float firClick=0,secClick=0;
 public MySurfaceView(Context context) {
 		super(context);
 		// TODO Auto-generated constructor stub
 		init();
-		mrr=new MyRenderer(); 
+		mrr=new MyRenderer(context); 
         setRenderer(mrr); 
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY); 
         
@@ -72,8 +72,10 @@ public MySurfaceView(Context context) {
 	public boolean onTouchEvent(MotionEvent event)
     {
 	  	int pointerCount = event.getPointerCount(); 
-	  	if(pointerCount==3){
-	  		axis=0.0f;
+	  	//取消选定轴
+	  	if(pointerCount==3||event.getAction()==MotionEvent.ACTION_OUTSIDE){
+	  		isclear=true;
+	  		 
             mrr.x_line=1.0f;
         	mrr.y_line=1.0f;
         	mrr.z_line=1.0f;
@@ -82,11 +84,15 @@ public MySurfaceView(Context context) {
         	isscale=false;
             DisplayToast("clear" );
 	  	}
+	  	//更新
 	  	else if(event.getAction()==MotionEvent.ACTION_UP){
 	  		isrotate=false;
         	istransl=false;
         	isscale=false;
-
+        	if(isclear){
+        		axis=0.0f;
+        		isclear=false;
+        	}
 	    	updata();
 	    	
 	  	}
@@ -113,13 +119,13 @@ public MySurfaceView(Context context) {
 	            
 	        } 
 	        */
-	  	 
+	  	 //执行平移操作
 	  	else if(axis!=0&&istransl&&!isscale&&!isrotate&&event.getAction()==MotionEvent.ACTION_MOVE){
 	  		new_x0=event.getX(0);
 	  		new_y0=event.getY(0);
 	  		
-	  		transl_length=((float)Math.sqrt((new_y0-old_y0)*(new_y0-old_y0)+
-					(new_x0-old_x0)*(new_x0-old_x0)) ) ;
+	  		transl_length=(float)Math.sqrt((new_y0-old_y0)*(new_y0-old_y0)+
+					(new_x0-old_x0)*(new_x0-old_x0))*3;
 	  		
 	  		 
 	  		if(axis==X_AXIS){
@@ -147,6 +153,7 @@ public MySurfaceView(Context context) {
 	  		}
 	  		
 	  	}
+	  	//预先进行平移初始点记录
 	  	else if(!istransl&&event.getAction()==MotionEvent.ACTION_DOWN&&pointerCount==1){
 	  		istransl=true;
 	  		 
@@ -155,7 +162,8 @@ public MySurfaceView(Context context) {
 	  		 
 	  		 
 	  	}
-	  	else if(axis==0&& pointerCount==2&&event.getAction()==MotionEvent.ACTION_MOVE){
+	  	//判定选轴
+	  	else if(!isclear&&axis==0&& pointerCount==2&&event.getAction()==MotionEvent.ACTION_MOVE){
 	  		istransl=false;
 		  	 
 		  		float xlength,ylength;
@@ -183,6 +191,7 @@ public MySurfaceView(Context context) {
 		         
 		  		 
 	  	}
+	  	//判定旋转还是缩放
 	  	else if(axis!=0 &&!isrotate&&!isscale&&pointerCount==2)
 		{
 	  				istransl=false;
@@ -231,6 +240,7 @@ public MySurfaceView(Context context) {
 			    			 
 			    		}
 		}
+	  	//执行旋转或缩放
 	  	else if(axis!=0&&(isscale||isrotate)&&event.getAction()==MotionEvent.ACTION_MOVE&&pointerCount==2){
 	  		
 	  		new_x0=event.getX(0);
@@ -240,7 +250,7 @@ public MySurfaceView(Context context) {
 		    
 			
 			
-			delta_angle= (float) Math.toDegrees(Math.atan2(new_y1-new_y0, new_x1-new_x0))-old_angle;
+			delta_angle= -(float) Math.toDegrees(Math.atan2(new_y1-new_y0, new_x1-new_x0))-old_angle;
 			 
 			delta_length=(float)Math.sqrt((new_y1-new_y0)*(new_y1-new_y0)+
 					(new_x1-new_x0)*(new_x1-new_x0))/(float)Math.sqrt((old_y1-old_y0)*(old_y1-old_y0)+
@@ -295,7 +305,7 @@ public MySurfaceView(Context context) {
 	  	}
 	  	
 	        	
-		  	
+		//
 	  	mrr.mytransl(tx, X_AXIS);
   		mrr.myscale(sx, X_AXIS);
   		mrr.myrotate(rx, X_AXIS);
